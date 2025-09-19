@@ -1,18 +1,3 @@
-%YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e5f12f81432d659449dcb9fba868dfa6, type: 3}
-  m_Name: LitterPottery
-  m_EditorClassIdentifier: 
-  id: 3
-  size: {x: 1, y: 1}
-  sprite: {fileID: 0}
-  WorldPrefab: {fileID: 4638425087861593973, guid: 483f75bf414b01445849d885afd8f67e, type: 3}
+version https://git-lfs.github.com/spec/v1
+oid sha256:75592d80da9764808f4811ae319b3750a95f6bb3eaf51f537ff190def43fdb79
+size 547

@@ -2053,7 +2053,7 @@ GameObject:
   - component: {fileID: 4352319588478237073}
   m_Layer: 0
   m_Name: Fish
-  m_TagString: Untagged
+  m_TagString: Fish
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2157,6 +2157,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 11400000, guid: 3f364baa173e6cf438a41af10b16c9cd, type: 2}
+  isLitter: 0
 --- !u!1 &6999926041920373449
 GameObject:
   m_ObjectHideFlags: 0

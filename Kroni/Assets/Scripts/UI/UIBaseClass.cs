@@ -41,6 +41,6 @@ public class UIBaseClass : MonoBehaviour
     }
 
     public bool CurrentMenuIsThis() {
-        return currentMenu = menu;
+        return currentMenu == menu;
     }
 }

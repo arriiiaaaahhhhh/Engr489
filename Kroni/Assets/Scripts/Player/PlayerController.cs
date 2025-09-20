@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -15,7 +14,10 @@ public class PlayerController : MonoBehaviour
     //if not in water, activate walk code
     //if swimming, activate swimming code
 
+    [Header("Water")]
     public LayerMask waterMask;
+    public string waterTriggerTag = "Water";   // <-- tag your WaterCollider with "Water"
+    bool isTeleporting = false;                // suppress trigger flips during teleport
 
     Rigidbody rb;
 
@@ -39,6 +41,12 @@ public class PlayerController : MonoBehaviour
     // Inventory
     InventorySystem iSystem;
 
+    // Respawn
+    [Header("Respawn")]
+    public Transform customSpawn;
+    Vector3 _spawnPos;
+    Quaternion _spawnRot;
+
 
     // Setup
     void Start()
@@ -51,6 +59,10 @@ public class PlayerController : MonoBehaviour
         rb.useGravity = true;
 
         iSystem = InventorySystem.Instance;
+
+        // Store spawn point
+        _spawnPos = (customSpawn != null) ? customSpawn.position : t.position;
+        _spawnRot = (customSpawn != null) ? customSpawn.rotation : t.rotation;
     }
 
     // Update is called once per frame
@@ -77,23 +89,24 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // Only react to the Water trigger
     private void OnTriggerEnter(Collider other)
     {
-        SwitchMovement();
+        if (isTeleporting) return;
+        if (((1 << other.gameObject.layer) & waterMask) != 0)  // layer-based
+        {
+            inWater = true;
+            rb.useGravity = false;
+        }
     }
-
     private void OnTriggerExit(Collider other)
     {
-        SwitchMovement();
-    }
-
-    void SwitchMovement()
-    {
-        //toggle isSwimming
-        inWater = !inWater;
-
-        //change the rigidbody accordingly
-        rb.useGravity = !rb.useGravity;
+        if (isTeleporting) return;
+        if (((1 << other.gameObject.layer) & waterMask) != 0)  // layer-based
+        {
+            inWater = false;
+            rb.useGravity = true;
+        }
     }
 
     void SwimmingOrFloating()
@@ -116,7 +129,7 @@ public class PlayerController : MonoBehaviour
             }
         }
         isSwimming = swimCheck;
-        Debug.Log(isSwimming);
+        UnityEngine.Debug.Log(isSwimming);
     }
 
     void LookAround()
@@ -125,7 +138,7 @@ public class PlayerController : MonoBehaviour
         rotationX += Input.GetAxis("Mouse X") * sensitivity;
         rotationY += Input.GetAxis("Mouse Y") * sensitivity;
 
-        //clamp the values of x and y
+        //clamp the values of y
         rotationY = Mathf.Clamp(rotationY, rotationMin, rotationMax);
 
         //setting the rotation value every update
@@ -152,34 +165,67 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        //check if player is on land
+        // Land movement
         if (!inWater)
         {
-            //move the character (land ver)
             t.Translate(new Quaternion(0, t.rotation.y, 0, t.rotation.w) * new Vector3(moveX, 0, moveZ) * Time.deltaTime * speed, Space.World);
         }
         else
         {
-            //check here if the player is swimming above water
+            // Water movement
             if (!isSwimming)
             {
-                //if the character is floating on the water, clamp the moveY value, so they cant rise further than that.
+                // Ensure player can't float above surface
                 moveY = Mathf.Min(moveY, 0);
 
-                //convert the local direction vector into a worldspace vector. 
+                // convert the local direction vector into a worldspace vector. 
                 Vector3 clampedDirection = transform.TransformDirection(new Vector3(moveX, moveY, moveZ));
-                //clamp the values
+                // clamp the values
                 clampedDirection = new Vector3(clampedDirection.x, Mathf.Min(clampedDirection.y, 0), clampedDirection.z);
 
                 t.Translate(clampedDirection * Time.deltaTime * speed, Space.World);
-
             }
             else
             {
-                //move the character (swimming ver)
+                // Underwater movement
                 t.Translate(new Vector3(moveX, 0, moveZ) * Time.deltaTime * speed);
                 t.Translate(new Vector3(0, moveY, 0) * Time.deltaTime * speed, Space.World);
             }
         }
+    }
+
+    // Respawn
+    public void TeleportToSpawn()
+    {
+        UnityEngine.Debug.Log("[Respawn] TeleportToSpawn called.");
+
+        isTeleporting = true;  // suppress water trigger flips this frame
+
+        // stop motion
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        // move to spawn pos
+        t.SetPositionAndRotation(_spawnPos, _spawnRot);
+
+        // ensure player's on land
+        inWater = false;
+        isSwimming = false;
+        rb.useGravity = true;
+
+        // small lift to avoid clipping
+        t.position += Vector3.up * 0.25f;
+
+        UnityEngine.Debug.Log($"[Respawn] New pos: {t.position}");
+
+        // release the guard shortly after teleport so triggers resume normally
+        StartCoroutine(ClearTeleportingFlag());
+    }
+
+    IEnumerator ClearTeleportingFlag()
+    {
+        // wait to stop re-trigger water bug
+        yield return new WaitForFixedUpdate();
+        isTeleporting = false;
     }
 }

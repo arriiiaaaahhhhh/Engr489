@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 using UnityEngine.UI;
+using static System.Net.Mime.MediaTypeNames;
 
 public class InventorySystem : MonoBehaviour
 {
@@ -13,10 +15,10 @@ public class InventorySystem : MonoBehaviour
     public GameObject inventory;        // UI panel container (the strip)
     public GameObject InventoryItem;    // Icon prefab
     public bool inventoryOpen;
-
+    public float playerReach = 20f;
     // Item Collection
     public GameObject cam;
-    public float playerReach = 10f;
+
 
     // Inventory display
     public int capacity = 6;
@@ -35,6 +37,8 @@ public class InventorySystem : MonoBehaviour
 
     void Update()
     {
+        if (UIBaseClass.menuOpen) return;
+
         InteractableObject i = HoverObject();
 
         if (i != null)
@@ -53,7 +57,6 @@ public class InventorySystem : MonoBehaviour
         {
             var io = hit.collider.GetComponent<InteractableObject>();
             return io != null ? io : hit.collider.GetComponentInParent<InteractableObject>();
-            //return hit.collider.gameObject.GetComponent<InteractableObject>();
         }
         return null;
     }
@@ -63,21 +66,37 @@ public class InventorySystem : MonoBehaviour
     {
         if (inventoryList.Count >= capacity)
         {
-            Debug.Log("inventory full!");
+            UnityEngine.Debug.Log("inventory full!");
             return;
         }
 
         if (itemPicked != null)
-        {
+        {   // Picking up litter increases lung capacity
             if (itemPicked.isLitter)
             {
+                // Show litter popup
+                if (ObjectiveManager.Instance != null)
+                    ObjectiveManager.Instance.ShowLitterPopup();
                 Destroy(itemPicked.gameObject);
                 PSInstance.BonusOxygen();
                 RefreshUI();
                 return;
             }
-            inventoryList.Add(itemPicked.item);
-            Destroy(itemPicked.gameObject);
+            // Only pick up item if it's the current objective
+            ObjectiveManager.Instance.NotifyCollected(itemPicked.gameObject.tag);
+            if (ObjectiveManager.Instance.isObjective)
+            {
+                inventoryList.Add(itemPicked.item);
+                Destroy(itemPicked.gameObject);
+                RefreshUI();
+                // If objective is reached, clear the inventory for the next set of objectives
+                if (ObjectiveManager.Instance.clearInventory)
+                {
+                    inventoryList.Clear();
+                    ObjectiveManager.Instance.clearInventory = false;
+                }
+            }
+
         }
         RefreshUI();
         return;
@@ -101,7 +120,7 @@ public class InventorySystem : MonoBehaviour
             rt.sizeDelta = iconSize;
             rt.anchoredPosition = new Vector2(i * (iconSize.x + iconSpacing), 0f);
 
-            var img = go.GetComponentInChildren<Image>();
+            var img = go.GetComponentInChildren<UnityEngine.UI.Image>();
             if (img != null) img.sprite = it.sprite;
         }
     }

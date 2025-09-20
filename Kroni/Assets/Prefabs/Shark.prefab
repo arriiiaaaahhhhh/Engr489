@@ -176,7 +176,7 @@ GameObject:
   - component: {fileID: 6531682392902392172}
   m_Layer: 0
   m_Name: Shark
-  m_TagString: Untagged
+  m_TagString: Shark
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -296,6 +296,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 11400000, guid: 2f0835f04b65fd44eba3a5bea29430bd, type: 2}
+  isLitter: 0
 --- !u!1 &1249107833113390054
 GameObject:
   m_ObjectHideFlags: 0
